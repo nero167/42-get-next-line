@@ -1,76 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: namirtha <namirtha@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/04/22 11:44:10 by namirtha          #+#    #+#             */
-/*   Updated: 2024/05/18 11:47:45 by namirtha         ###   ########.fr       */
+/*   Created: 2024/05/06 10:41:01 by namirtha          #+#    #+#             */
+/*   Updated: 2024/05/06 10:51:36 by namirtha         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 char	*get_next_line(int fd)
 {
 	char		buff[BUFFER_SIZE + 1];
-	static char	*stash;
+	static char	*stash[OPEN_MAX];
 	char		*tmp;
 	int			read_len;
 
 	tmp = NULL;
-	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0))
-		return (free(tmp), free(stash), stash = NULL, NULL); // hier muss nur stash gefreet werden, da es eine static char ist
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) || fd > OPEN_MAX)
+		return (free(tmp), free(stash[fd]), stash[fd] = NULL, NULL);
 	read_len = 1;
-	tmp = stash;
+	tmp = stash[fd];
 	while (read_len > 0 && ft_strlen(tmp, '\n') == -1)
 	{
 		read_len = read(fd, buff, BUFFER_SIZE);
-		if (read_len == 0 && stash == NULL)
+		if (read_len == 0 && stash[fd] == NULL)
 			break ;
 		if (read_len < 0)
 			return (NULL);
 		buff[read_len] = '\0';
-		stash = ft_strjoin(stash, buff);
-		if (stash == NULL)
+		stash[fd] = ft_strjoin(stash[fd], buff);
+		if (stash[fd] == NULL)
 			return (NULL);
-		tmp = stash;
+		tmp = stash[fd];
 	}
-	stash = new_next_line(stash);
-	return (extract_first_line(tmp, &stash));
+	stash[fd] = new_next_line(stash[fd]);
+	return (extract_first_line(tmp, &stash[fd]));
 }
-// char	*get_next_line(int fd)
-// {
-// 	static char buff[BUFFER_SIZE];
-// 	char        *temp;
-// 	size_t      len_read;
-// 	static size_t      pos;
-// 	size_t	start_pos;
-
-// 	start_pos = pos;
-// 	if (fd < 0 || BUFFER_SIZE <= 0)
-// 		return (NULL);
-// 	if (buff[0] == '\0')
-// 	{
-// 		len_read = read(fd, buff, BUFFER_SIZE);
-// 		// printf("len_read: %d\n", len_read);
-// 	}
-// 	while (1)
-// 	{
-// 		if (buff[pos] == '\n')
-// 		{
-// 			temp = malloc(sizeof(char) * (pos + 2));
-// 			if (!temp)
-// 				return (NULL);
-// 			temp = ft_strncpy(temp, &buff[start_pos], pos - start_pos + 1);
-// 			temp[pos - start_pos + 1] = '\0';
-// 			// printf("temp: %s\n", temp);
-// 			return (pos++, temp);
-// 		}
-// 		pos++;
-// 	}
-// }
 
 char	*new_next_line(char *tmp)
 {
@@ -116,16 +85,4 @@ char	*extract_first_line(char *tmp, char **stash)
 	res[index] = 0;
 	free (tmp);
 	return (res);
-}
-#include <stdio.h>
-
-int main(void)
-{
-    int fd;
-
-    // fd = open("testtext.txt", O_RDONLY);
-    //get_next_line(fd);
-    printf("%s", get_next_line(-1));
-    return (0);
-
 }
